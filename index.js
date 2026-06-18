@@ -29,8 +29,21 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
 
+        const database = client.db("final_project");
+        const users = database.collection("user");
+        const donations = database.collection("donations");
+        const donationrequests = database.collection("donationrequests");
 
-
+        app.post('/api/create-donation-request', async (req, res) => {
+            const donationRequest = req.body;
+            const newDonationRequest = {
+                ...donationRequest,
+                createdAt: new Date(),
+            }
+            //console.log("new donation request", newDonationRequest)
+            const result = await donationrequests.insertOne(newDonationRequest);
+            res.send(result);
+        })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
