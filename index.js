@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express()
 require('dotenv').config();
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors = require('cors');
 const port = process.env.PORT || 8000
 
@@ -31,7 +31,6 @@ async function run() {
 
         const database = client.db("final_project");
         const users = database.collection("user");
-        const donations = database.collection("donations");
         const donationrequests = database.collection("donationrequests");
 
         app.post('/api/create-donation-request', async (req, res) => {
@@ -42,6 +41,44 @@ async function run() {
             }
             //console.log("new donation request", newDonationRequest)
             const result = await donationrequests.insertOne(newDonationRequest);
+            res.send(result);
+        })
+
+        app.patch('/api/donation-request/:id', async (req, res) => {
+            const id = req.params.id;
+            const donationRequest = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updatedDonationRequest = {
+                $set: {
+                    ...donationRequest,
+                }
+            }
+            const result = await donationrequests.updateOne(query, updatedDonationRequest);
+            res.send(result);
+        })
+
+        // user update patch api
+        app.patch('/api/user/:id', async (req, res) => {
+            const id = req.params.id;
+            const user = req.body;
+            console.log(user)
+            const query = { _id: new ObjectId(id) };
+            const updatedUser = {
+                $set: {
+                    ...user,
+                }
+            }
+            const result = await users.updateOne(query, updatedUser);
+            res.send(result);
+        })
+
+        app.get("/api/donation-requests/recent", async (req, res) => {
+            const email = req.query.email;
+            const query = {
+                requesterEmail: email
+            };
+            const cursor = donationrequests.find(query).sort({ createdAt: -1 });
+            const result = await cursor.toArray();
             res.send(result);
         })
 
