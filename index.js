@@ -41,7 +41,7 @@ const verifyToken = async (req, res, next) => {
     
     try {
         const { payload } = await jwtVerify(token, JWKS)
-        console.log(payload)
+        //console.log(payload)
         next();
     }
      catch (error) {
@@ -52,7 +52,7 @@ const verifyToken = async (req, res, next) => {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const database = client.db("final_project");
         const users = database.collection("user");
@@ -86,7 +86,7 @@ async function run() {
         app.patch('/api/user/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const user = req.body;
-            console.log(user)
+            //console.log(user)
             const query = { _id: new ObjectId(id) };
             const updatedUser = {
                 $set: {
@@ -127,8 +127,32 @@ async function run() {
         })
 
         // all donationrequests get api
-        app.get('/api/all-blood-donation-requests', verifyToken, async (req, res) => {
+        app.get('/api/all-blood-donation-requests', async (req, res) => {
             const cursor = donationrequests.find();
+            const result = await cursor.toArray();
+            res.send(result);
+        })
+
+        // get search blood doners api
+        app.get('/api/donors/search', async (req, res) => {
+            const query = req.query;
+            console.log(query)
+            const filter = {
+                bloodGroup: query.bloodGroup,
+                district: query.district,
+                upazila: query.upazila,
+                status: "active"
+            };
+            const result = await users.find(filter).toArray();
+            res.send(result);
+        })
+
+        // all pending donationrequests get api
+        app.get('/api/pending-donation-requests', async (req, res) => {
+            const query = {
+                donationStatus: 'pending'
+            }
+            const cursor = donationrequests.find(query);
             const result = await cursor.toArray();
             res.send(result);
         })
@@ -136,7 +160,7 @@ async function run() {
         // get single donation request details
         app.get('/api/donation-request/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
-            console.log(req.headers.authorization, "token")
+            //console.log(req.headers.authorization, "token")
             const query = { _id: new ObjectId(id) };
             const result = await donationrequests.findOne(query);
             res.send(result);
@@ -147,12 +171,12 @@ async function run() {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const result = await donationrequests.deleteOne(query);
-            console.log('delete result',result)
+            //console.log('delete result',result)
             res.send(result);
         })
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
